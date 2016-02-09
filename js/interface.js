@@ -17,46 +17,18 @@ $ ( document ).ready(function() {
     }
     */
 
-    /*
     function createNewPlot(file) {
-        var dotStructPlot = dotStructLayout();
+        console.log('file:', file);
 
-        console.log('file', file);
-        data = JSON.parse(file.target.result);
+        var data = d3.dsv(' ').parse(file.target.result);
+        console.log('data:', data);
 
-        dotStructPlot.width(data.seq.length * 10);
-
-        var boundContainer = d3.select('#visContainer')
-        .selectAll('svg')
-        .data([data], function(d) { return d.seq })
-
-        var svg = boundContainer.enter()
-        .append('svg')
-        .attr('id', 'dotplot')
-
-        boundContainer.exit()
-        .remove()
-
-        var style = svg.append('svg:style');
-        $.get(location.origin + window.location.pathname.replace(/[^\/]+$/g,"") + "css/dotstruct.css", 
-              function(content){
-                  style.text(content.replace(/[\s\n]/g, ""));
-
-                  svg.call(dotStructPlot);
-
-              });
-
-        setSize();
-    }
-    */
-
-    d3.dsv(" ", 'text/plain')('data/pete.short', function(error, data) {
-    //d3.dsv(" ", 'text/plain')('data/pete.out.filtered', function(error, data) {
         currentCTView = 'time-series'
         var width = 800;
         var height = 600;
 
         var showPlot = function(plotLayout) {
+            console.log('showPlot');
             //dotStructPlot.width(data.seq.length * 10);
             d3.select('#visContainer')
             .selectAll('.removable-plot')
@@ -67,9 +39,9 @@ $ ( document ).ready(function() {
             .classed('removable-plot', true)
             .data([data])
             /*
-            .enter()
-            .append('svg')
-            */
+               .enter()
+               .append('svg')
+               */
             //.attr('width', plotLayout.width())
             //.attr('height', plotLayout.height())
             .attr('id', 'my-plot');
@@ -98,7 +70,9 @@ $ ( document ).ready(function() {
         toggleView = showTimeSeriesPlot;
         //toggleView = showSmallMultiplesPlot;
         toggleView();
-    });
+    }
+
+    //createNewPlot('data/pete.growing');
 
     /* add event listener to the file browse button */
   $('#files').on('change', function(evt) {
