@@ -12,25 +12,18 @@ function doStepwiseAnimation(elementName, structs, duration) {
                                        'initialSize': null,
                                        'transitionDuration': duration });
 
-                                       var funcs = []
+   var funcs = []
 
-                                       for (i = 0; i < structs.length; i++) {
-                                           if (funcs.length === 0)
-                                               (function(val) { funcs.push(function() { container.transitionRNA(structs[val]); container.setOutlineColor('white');
-                                               })} )(i);
-                                               else
-                                                   (function(val, prevFunc) { funcs.push(function() { container.transitionRNA(structs[val], prevFunc); container.setOutlineColor('white');
-                                                   })} )(i, funcs[funcs.length-1] );
-                                       }
+   for (i = 0; i < structs.length; i++) {
+       if (funcs.length === 0)
+           (function(val) { funcs.push(function() { container.transitionRNA(structs[val]); container.setOutlineColor('white');
+           })} )(i);
+           else
+               (function(val, prevFunc) { funcs.push(function() { container.transitionRNA(structs[val], prevFunc); container.setOutlineColor('white');
+               })} )(i, funcs[funcs.length-1] );
+   }
 
-                                       funcs[funcs.length-1]();
-}
-
-function uuid() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-        return v.toString(16);
-    });
+   funcs[funcs.length-1]();
 }
 
 export function cotranscriptionalTimeSeriesLayout() {
@@ -228,7 +221,9 @@ export function cotranscriptionalTimeSeriesLayout() {
                 rectX.domain(lineX.domain());
                 rectY.domain([0, maxStructLength]);
 
-                dataRectangleGroups = svg.selectAll('.data-rectangle-group')
+                let gZoom = svg.append('g');
+
+                dataRectangleGroups = gZoom.selectAll('.data-rectangle-group')
                 .data(dataByTime)
                 .enter()
                 .append('g')
@@ -309,11 +304,25 @@ export function cotranscriptionalTimeSeriesLayout() {
                 });
                 */
 
+
                 xAxisOverlayRect = svg.append('rect')
                 .attr('class', 'overlay')
                 .on('mouseover', function() { })
                 .on('mousemove', mousemove)
                 .on('click', mouseclick);
+
+               /*
+               let zoom = d3.behavior.zoom()
+               .on('zoom', function() {
+                   console.log('zooming...', d3.event);
+                   let translate = d3.event.translate;
+                   let scale = d3.event.scale;
+                    gZoom.attr('transform', 'translate(' + translate[0] + ',' + translate[1] + ')' + 
+                                            'scale(' + scale + ')');
+               });
+
+                xAxisOverlayRect.call(zoom)
+               */
 
                 wholeDiv
                 .on('mouseenter', function() {
