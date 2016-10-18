@@ -146,7 +146,8 @@ export function cotranscriptionalTimeSeriesLayout() {
                 calculateNucleotideColors(data);
 
                 var dataByTime = d3.nest().key(function(d) { return +d.time;}).entries(data);
-                calculateColorPerTimePoint(dataByTime);
+                sortStructuresByConcentrationAtTimePoint(dataByTime);
+                console.log('dataByTime', dataByTime);
 
                 color.domain(d3.set(data.map(function(d) { return d.id })).values());
 
@@ -228,22 +229,35 @@ export function cotranscriptionalTimeSeriesLayout() {
                 .enter()
                 .append('g')
                 .classed('data-rectangle-group', true)
-                .attr('transform', (d) => { return `translate(${rectX(+d.key)},0)`; })
-                .each(function(d) {
-                    let rectWidth = Math.abs(rectX(+d.key) - rectX(+d.key + d.dt));
-                    let rectPos = rectX(+d.key);
 
-                    d3.select(this).selectAll('.data-rectangle')
-                    .data(d.values[0].colors)
-                    .enter()
-                    .append('rect')
-                    .classed('data-rectangle', true)
-                    .attr('y', (d,i) => { return rectY(i); })
-                    .attr('height', Math.abs(rectY.range()[1] - rectY.range()[0]) / maxStructLength)
-                    .attr('width', rectWidth)
-                    .attr('fill', (d) => {return d;});
-                
-                });
+                function updateDataRectangles() {
+                    dataRectangleGroups
+                    .attr('transform', (d) => { return `translate(${lineX(+d.key)},0)`; })
+                    .each(function(d) {
+                        let rectWidth = Math.abs(lineX(+d.key + d.dt) - lineX(+d.key));
+                        let rectPos = lineX(+d.key);
+
+                        console.log('d.key', d.key, 'rectPos', rectPos, 'rectWidth:', rectWidth);
+
+                        d3.select(this).selectAll('.data-rectangle')
+                        .data(d.values[0].colors)
+                        .enter()
+                        .append('rect')
+                        .classed('data-rectangle', true)
+
+                        d3.select(this).selectAll('.data-rectangle')
+                        .data(d.values[0].colors)
+                        .attr('y', (d,i) => { return rectY(i); })
+                        .attr('height', Math.abs(rectY.range()[1] - rectY.range()[0]) / maxStructLength)
+                        .attr('width', rectWidth)
+                        .attr('fill', (d) => {return d;});
+
+                    });
+
+                    gXAxis.call(xAxis);
+                }
+
+                updateDataRectangles();
 
                 currentTimeIndicatorLine = svg.append('line')
                 .attr('x1', currentTime)
@@ -262,10 +276,12 @@ export function cotranscriptionalTimeSeriesLayout() {
 
                 }
 
+                /*
                 var concProfile = svg.selectAll('.concProfile')
                 .data(nestedData)
                 .enter().append('g')
                 .attr('class', 'concProfile');
+                */
 
                 root = createInitialRoot(nestedData);
                 let populatedValues = [];
@@ -311,18 +327,17 @@ export function cotranscriptionalTimeSeriesLayout() {
                 .on('mousemove', mousemove)
                 .on('click', mouseclick);
 
-               /*
                let zoom = d3.behavior.zoom()
+               .x(lineX)
                .on('zoom', function() {
-                   console.log('zooming...', d3.event);
                    let translate = d3.event.translate;
                    let scale = d3.event.scale;
-                    gZoom.attr('transform', 'translate(' + translate[0] + ',' + translate[1] + ')' + 
-                                            'scale(' + scale + ')');
+                    gZoom.attr('transform', 'translate(' + translate[0] + ',' + 0 + ')' + 
+                                            'scale(' + scale + ',1)');
+                    gXAxis.call(xAxis);
                });
 
                 xAxisOverlayRect.call(zoom)
-               */
 
                 wholeDiv
                 .on('mouseenter', function() {
@@ -348,7 +363,7 @@ export function cotranscriptionalTimeSeriesLayout() {
                     });
                 }
 
-                function calculateColorPerTimePoint(dataByTime) {
+                function sortStructuresByConcentrationAtTimePoint(dataByTime) {
                     dataByTime.forEach((d) => {
                         d.values.sort((a,b) => { return (+b.conc) - (+a.conc); });
                     });
@@ -384,7 +399,6 @@ export function cotranscriptionalTimeSeriesLayout() {
                                 colors[d-1] = rainbowScale(nucleotideNormPosition);
                             });
 
-
                             // each structure gets its own set of structures
                         }
                         d.colors = colors;
@@ -398,19 +412,24 @@ export function cotranscriptionalTimeSeriesLayout() {
                     var y0 = lineX.invert(xCoord);
 
                     let i = bisectTime(data, y0, 1);
+                    console.log('nestedData:', nestedData);
                     var values = nestedData.map(function(data) { 
-                        var i = bisectTime(data.values, y0, 0)
+                        var i = bisectTime(data.values, y0, 0);
 
                         if (i >= data.values.length || i == 0)
                             return {'name': data.key, 'struct': data.values[0].struct, 'size': 0};
 
+                        i -= 1;
+                        console.log('y0', y0, 'data.values[i]:', data.values[i]);
                         var sc = d3.scale.linear()
-                        .domain([data.values[i-1].time, data.values[i].time])
-                        .range([data.values[i-1].conc, data.values[i].conc])
+                        .domain([data.values[i].time, data.values[i+1].time])
+                        .range([data.values[i].conc, data.values[i+1].conc])
 
                         var value = sc(y0);
 
-                        var retVal= {'name': data.key, 'struct': data.values[0].struct, 'size': +value};
+                        var retVal= {'name': data.key, 
+                            'struct': data.values[0].struct, 
+                            'size': +value};
                         containers[divName(retVal)].transitionRNA(data.values[i].struct)
                         return retVal;
                     });
