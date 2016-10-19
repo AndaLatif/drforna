@@ -419,6 +419,7 @@ export function cotranscriptionalTimeSeriesLayout() {
                         if (i >= data.values.length || i == 0)
                             return {'name': data.key, 'struct': data.values[0].struct, 'size': 0};
 
+                        // hack added to make sure that the rectangle to the right is selected
                         i -= 1;
                         console.log('y0', y0, 'data.values[i]:', data.values[i]);
                         var sc = d3.scale.linear()
